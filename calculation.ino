@@ -25,6 +25,8 @@ void loop() {
   // Deallocate memory allocated for dimensions array
   delete[] dimensions;
 
+  findItem(m5StickC, dimensions);
+
   delay(1000); // delay
 }
 
@@ -66,17 +68,26 @@ float* calculateShelveDimensions() {
 // column --- length
 // row    --- height
 // depth  --- width 
-void findItem(float m5StickC[3], float dimensions[3]) {
-  int column = compareCoordinate(m5StickC[0], dimensions[2] / 3.0);
-  int row = compareCoordinate(m5StickC[1], dimensions[1] / 3.0);
-  int depth = compareCoordinate(m5StickC[2], dimensions[0]/3.0); 
+// void findItem(float m5StickC[3], float dimensions[3]) {
+//   int column = compareCoordinate(m5StickC[0], dimensions[2] / 3.0);
+//   int row = compareCoordinate(m5StickC[1], dimensions[1] / 3.0);
+//   int depth = compareCoordinate(m5StickC[2], dimensions[0]/3.0); 
 
-  Serial.print("Column: ");
-  Serial.print(column);
-  Serial.print(" | Row: ");
-  Serial.print(row);
-  Serial.print(" | Depth: ");
-  Serial.println(depth);
+//   Serial.print("Column: ");
+//   Serial.print(column);
+//   Serial.print(" | Row: ");
+//   Serial.print(row);
+//   Serial.print(" | Depth: ");
+//   Serial.println(depth);
+// }
+
+void findItem(float m5StickC[3], float dimensions[3]) {
+  char level = 'A' + (int)(m5StickC[2] / (dimensions[1] / 3.0));
+  int position = ((int)(m5StickC[1] / (dimensions[1] / 3.0)) * 3) + (int)(m5StickC[0] / (dimensions[0] / 3.0)) + 1;
+
+  Serial.print("Location: ");
+  Serial.print(level);
+  Serial.println(position);
 }
 
 int compareCoordinate(float coordinate, float segmentSize) {
