@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        .centered-dropdown {
+            display: flex;
+            justify-content: center; /* Centers the button horizontally */
+            margin-bottom: 20px; /* Provides space below the button */
+        }
+        /* Additional styles to ensure everything is centered */
+        .text-center {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+    <script>
+        // Javascript for autorefreshing the page
+        function autoRefresh(){
+            location.reload(true);
+            setInterval(autoRefresh,10000);
+        }
+    </script>
+</head>
+
+<body>
+    <div class="text-center">
+        <h2 class="display-2"><b>DASHBOARD</b></h2>
+        <h5>Inventory Management</h5>
+    </div>
+    <br>
+    
+    <!-- Table -->
+    <table class="table" style="padding-left: 10px; width: 90%; margin: 0 auto;">
+        <thead class="table-dark">
+            <tr>
+                <th>Inventory</th>
+                <th>Shelf No</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+
+        <!-- To do for each code and retrieve all the items and display accordingly -->
+        <tbody id="inentory-table-body">
+            $rowCode$
+            <!-- <tr>
+                <td>a</td>
+                <td>b</td>
+                <td>c</td>
+            </tr> -->
+
+
+        </tbody>
+    </table>
+
+</body>
+
+</html>
