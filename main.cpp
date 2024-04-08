@@ -17,8 +17,7 @@ Firebase firebase(REFERENCE_URL);
 
 WebServer server(80);
 
-// Fetch the data from the database, and store each inventory separately
-std::vector<std::vector<std::string>> retrieveDatabaseData()
+std::vector<std::vector<std::string>> retrieveFB()
 {
   // Fetch data from Firebase and convert it to a C-style string
   const char *firebaseData = firebase.getString("/inventory").c_str();
@@ -50,12 +49,12 @@ std::vector<std::vector<std::string>> retrieveDatabaseData()
     {
       insideItem = false;
       // Store the last part of the item
-      tempList.push_back(temp);
+      tempList.push_back(temp); 
       temp.clear();
       // Add tempList to the result
-      result.push_back(tempList);
+      result.push_back(tempList); 
       // Clear tempList for the next item
-      tempList.clear();
+      tempList.clear();           
     }
     else
     {
@@ -66,77 +65,13 @@ std::vector<std::vector<std::string>> retrieveDatabaseData()
   return result;
 }
 
-// To extract the result for the HTML
-String extractData()
+void dashboard()
 {
-  // Get the result from the database
-  std::vector<std::vector<std::string>> result = retrieveDatabaseData();
-
-  // To store the variable for html
-  String rowDataHTML;
-
-  // Print the result to the serial monitor
-  for (auto &item : result)
-  {
-    Serial.print("[");
-    bool isFirstElement = true;
-    for (auto &value : item)
-    {
-      // Remove the comma
-      if (value[0] == ',')
-      {
-        value = value.substr(1);
-      }
-
-      // When it is the first element (E.g. "abc":)
-      if (isFirstElement)
-      {
-        // Extract the name of the inventory
-        value = value.substr(1, value.size() - 3);
-        // Add to the html row data
-        rowDataHTML = rowDataHTML + "<tr><td>" + value.c_str() + "</td>";
-        //
-        Serial.println(value.c_str());
-        // Update that it is the next variable
-        isFirstElement = false;
-      }
-      // When it second element (E.g. "location":"unknown","shelf":"unknown")
-      else
-      {
-        // Find the comma index
-        size_t commaIndex = value.find(',');
-        // Serial.println(commaIndex);
-
-        // Extract the location portion
-        // 12 - ignore first 11 characters "location": and start from the 12th characters
-        // commaIndex-13 - Length to extract (until commaIndex, exclude "location":" and the final ")
-        String location = value.substr(12, commaIndex - 13).c_str();
-
-        // Extract the shelf portion
-        // commaIndex+10 - Start after comma and "shelf":"
-        // value.size()-commaIndex-11 - Length to extract (whole second element length, ignore everything before comma, ignore "shelf: and the final ")
-        String shelf = value.substr(commaIndex + 10, value.size() - commaIndex - 11).c_str();
-
-        // Add to the html row data
-        rowDataHTML = rowDataHTML + "<td>" + shelf + "</td><td>" + location + "</td></tr>";
-
-        // Debug code
-        Serial.println(location);
-        Serial.println(shelf);
-      }
-    }
-    return rowDataHTML;
-  }
-}
-
-// Read the HTML current file
-String readHTMLContent()
-{
-    // Check if SPIFFS is initialized
+  // Check if SPIFFS is initialized
   if (!SPIFFS.begin())
   {
     Serial.println("Failed to initialize SPIFFS");
-    server.send(500, "text/plain", "Failed to initialize SPIFFS");
+    return server.send(500, "text/plain", "Failed to initialize SPIFFS");
   }
 
   // Check if the file exists
@@ -147,7 +82,7 @@ String readHTMLContent()
   else
   {
     Serial.println("HTML file does not exist");
-    server.send(500, "text/plain", "HTML file not found");
+    return server.send(500, "text/plain", "HTML file not found");
   }
 
   // Read the HTML file
@@ -155,7 +90,7 @@ String readHTMLContent()
   if (!htmlFile)
   {
     Serial.println("Failed to open dashboard.html file");
-    server.send(500, "text/plain", "Failed to open HTML file");
+    return server.send(500, "text/plain", "Failed to open HTML file");
   }
 
   // Print a new line
@@ -168,23 +103,53 @@ String readHTMLContent()
   String htmlContent = htmlFile.readString();
   htmlFile.close();
 
-  return htmlContent;
-}
+  // Get the result from the database
+  std::vector<std::vector<std::string>> result = retrieveFB();
+  String response;
+  // Print the result to the serial monitor
+  for (auto &item : result)
+  {
+    Serial.print("[");
+    
+    bool isFirstElement = true;
+    for (auto &value : item)
+    {
+      // Remove the comma
+      if (value[0] == ',')
+      {
+        value = value.substr(1);
+      }     
+      // When it is the first element (E.g. "abc":), remove colon
+      if (isFirstElement)
+      {
+        value = value.substr(1, value.size() - 3);
+        response = response + "<tr><td>"+value.c_str()+"</td>";
+        Serial.println(value.c_str());
+      }
+      else{
+        // Find the comma index
+        size_t commaIndex = value.find(',');
+        //Serial.println(commaIndex);
 
-// Output the HTML file and replace the data accordingly.
-void dashboard()
-{
-  // Variable to store the formatted HTML with extracted data
-  String rowDataHTML = extractData();
+        // Extract the location portion
+        String location = value.substr(12, commaIndex-13).c_str();
+        
+        // Extract the shelf portion
+        String shelf = value.substr(commaIndex+10, value.size()-commaIndex-11).c_str();
+        response = response + "<td>"+shelf+"</td><td>"+location+"</td></tr>";
+        //Debug code
+        Serial.println(location);
+        Serial.println(shelf);
+      }
+      isFirstElement = false; 
+      //Serial.println(value.c_str());
+    }
+    Serial.println("]");
+  }
 
-  // Read the HTML file
-  String htmlContent = readHTMLContent();
-
-  // Debugging
-  Serial.println(rowDataHTML);
-
+  Serial.println(response),
   // Replace the placeholder {$rowData} with actual data
-  htmlContent.replace("$rowCode$", String(rowDataHTML));
+  htmlContent.replace("$rowCode$", String(response));
 
   // Send the modified HTML content as the server response
   server.send(200, "text/html", htmlContent);
@@ -259,6 +224,11 @@ void setup()
     delay(500);
     Serial.print("Connecting ..");
   }
+  Serial.println();
+  // getFullData1();
+  Serial.println();
+  // getFullData();
+  retrieveFB();
 
   // Display IP Address on M5Stick LCD
   M5.Lcd.setCursor(0, 40, 2);
